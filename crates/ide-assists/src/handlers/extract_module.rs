@@ -706,6 +706,7 @@ fn check_def_in_mod_and_out_sel(
         Definition::Static(x) => check_item!(x),
         Definition::Trait(x) => check_item!(x),
         Definition::TypeAlias(x) => check_item!(x),
+        Definition::Macro(x) => check_item!(x),
         _ => {}
     }
 
@@ -1735,6 +1736,35 @@ use modname::Direction::{Horizontal, Vertical};
 
 fn main() {
     let x = Vertical;
+}
+"#,
+        );
+    }
+
+    #[test]
+    fn test_extract_module_function_like_macro_import() {
+        check_assist(
+            extract_module,
+            r#"
+macro_rules! m {
+    () => {};
+}
+
+$0fn foo() {
+    let _ = m;
+}$0
+"#,
+            r#"
+macro_rules! m {
+    () => {};
+}
+
+mod modname {
+    use super::m;
+
+    pub(crate) fn foo() {
+        let _ = m;
+    }
 }
 "#,
         );
